@@ -1,0 +1,14 @@
+{
+  "_comment": "NACL for the public subnet 10.20.4.0/24 (load balancer lives here). app subnet = 10.20.0.0/22, management subnet = 10.20.5.128/27. Lowest rule number is checked first, first match wins, no match = deny.",
+  "inbound": [
+    {"rule": 10,  "protocol": "all", "cidr": "198.51.100.0/24", "action": "deny"},
+    {"rule": 100, "protocol": "tcp", "port_from": 80,   "port_to": 80,    "cidr": "0.0.0.0/0",      "action": "allow"},
+    {"rule": 110, "protocol": "tcp", "port_from": 443,  "port_to": 443,   "cidr": "0.0.0.0/0",      "action": "allow"},
+    {"rule": 120, "protocol": "tcp", "port_from": 22,   "port_to": 22,    "cidr": "10.20.5.128/27", "action": "allow"},
+    {"rule": 130, "protocol": "tcp", "port_from": 1024, "port_to": 65535, "cidr": "10.20.0.0/22",   "action": "allow"}
+  ],
+  "outbound": [
+    {"rule": 100, "protocol": "tcp", "port_from": 8000, "port_to": 8000,  "cidr": "10.20.0.0/22", "action": "allow"},
+    {"rule": 110, "protocol": "tcp", "port_from": 1024, "port_to": 65535, "cidr": "0.0.0.0/0",    "action": "allow"}
+  ]
+}
