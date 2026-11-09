@@ -1,0 +1,15 @@
+# Task 2 training configuration. train.py reads only this file.
+seed: 42
+learning_rate: 0.00005
+batch_size: 8
+epochs: 3
+max_seq_len: 128
+max_records: 1500          # first 1,500 records of the cleaned dataset (project rule)
+student: EleutherAI/pythia-70m
+train_file: datasets/v1/train.jsonl
+output_dir: models/v1
+versions:
+  python: "3.11"
+  torch: "2.4.1+cpu"
+  transformers: "4.46.3"
+  pyyaml: "6.0.2"
