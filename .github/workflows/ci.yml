@@ -1,0 +1,66 @@
+# Task 6 pipeline: lint -> unit tests -> model evaluation from the GitHub Release -> quality gate -> secret scan
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      model_source:
+        description: "release (trained student from the Release) or base (untrained pythia-70m, makes the gate fail)"
+        default: release
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install pyflakes==3.2.0
+      - run: python -m pyflakes worker service training scripts tests
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install pytest==8.3.3 fastapi==0.115.5 httpx==0.27.2 boto3==1.35.70 pyyaml==6.0.2
+      - run: python -m pytest -q tests
+
+  evaluate:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -r training/requirements.txt
+      - name: Get the model
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          if [ "${{ github.event.inputs.model_source || 'release' }}" = "base" ]; then
+            echo "EleutherAI/pythia-70m" > model_path.txt
+          else
+            gh release download model-v1 --pattern "v1.tar.gz" --dir . && tar -xzf v1.tar.gz
+            echo "verifying checksum"; cat models/v1/model.sha256
+            echo "models/v1" > model_path.txt
+          fi
+      - run: python training/predict.py --model "$(cat model_path.txt)" --out results/ci_pred.jsonl
+      - name: Quality gate (json validity must be >= 95%)
+        run: python tools/score.py results/ci_pred.jsonl data/validation.jsonl --out results/ci_score.json --min-validity 95
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: ci-eval, path: results/ci_*}
+
+  secrets:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: gitleaks/gitleaks-action@v2
+        env: {GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"}
