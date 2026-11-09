@@ -44,10 +44,13 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.model_source || 'release' }}" = "base" ]; then
             echo "EleutherAI/pythia-70m" > model_path.txt
-          else
-            gh release download model-v1 --pattern "v1.tar.gz" --dir . && tar -xzf v1.tar.gz
+          elif gh release download model-v1 --pattern "v1.tar.gz" --dir . 2>/dev/null; then
+            tar -xzf v1.tar.gz
             echo "verifying checksum"; cat models/v1/model.sha256
             echo "models/v1" > model_path.txt
+          else
+            echo "::warning::no model-v1 Release asset found, evaluating the untrained base model instead (the gate is expected to fail)"
+            echo "EleutherAI/pythia-70m" > model_path.txt
           fi
       - run: python training/predict.py --model "$(cat model_path.txt)" --out results/ci_pred.jsonl
       - name: Quality gate (json validity must be >= 95%)
@@ -62,5 +65,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - uses: gitleaks/gitleaks-action@v2
-        env: {GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"}
+      - name: gitleaks (must report nothing)
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.21.2 \
+            git /repo --no-banner --redact --exit-code 1 --report-path /repo/gitleaks-report.json \
+            && echo "gitleaks: no leaks found"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: gitleaks-report, path: gitleaks-report.json}
