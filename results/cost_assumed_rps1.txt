@@ -1,0 +1,5 @@
+rate card: 3.5 INR/vCPU-hour, 0.45 INR/GiB-hour
+one replica per hour  = 1.0 x 3.5 + 1.0 x 0.45 = 3.95
+2 replicas per hour = 7.9
+requests per hour     = 1.0 x 3600 = 3600.0
+cost per 1000 requests = 7.9 / 3600.0 x 1000 = 2.1944 INR
