@@ -10,6 +10,7 @@ AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY come from the Kubernetes Secret.
 import os
 import socket
 import threading
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
@@ -26,7 +27,6 @@ POD_NAME = os.environ.get("POD_NAME") or socket.gethostname()
 
 os.environ.setdefault("S3_ENDPOINT", S3_ENDPOINT)
 
-app = FastAPI(title="command-parser")
 state = {"runner": None, "error": None}
 
 
@@ -44,10 +44,15 @@ def load_model():
         print(f"model load failed: {e}", flush=True)
 
 
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(_app):
+    # start the model download in the background so /healthz answers at once
     if os.environ.get("SKIP_MODEL_LOAD") != "1":
         threading.Thread(target=load_model, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="command-parser", lifespan=lifespan)
 
 
 @app.get("/healthz")
