@@ -3,7 +3,7 @@
 Sequence-level knowledge distillation of a command parser (phi3.5 teacher -> pythia-70m student),
 served from a container on a local k3d Kubernetes cluster with SeaweedFS object storage.
 
-**Student:** Kapil Kumar  **Roll number:** ROLL_NUMBER
+**Student:** Kapil Kumar  **Roll number:** 230103040
 **GitHub repo:** https://github.com/Thegreatkk04/cloud-assignment
 
 Status (honest): the code, manifests, tests, network files and CI workflow are complete and the

@@ -1,7 +1,7 @@
 ---
 title: "CS3081 Cloud Computing Mini Project: Report"
 subtitle: "Knowledge distillation and deployment of a command-parsing model on a local cloud"
-author: "Kapil Kumar, Roll number ROLL_NUMBER"
+author: "Kapil Kumar, Roll number 230103040"
 date: "9 November 2026"
 geometry: margin=2cm
 fontsize: 10pt
