@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# model weights go to object storage + GitHub Release, never to git
+models/
+*.tar.gz
+*.safetensors
+*.bin
+*.pt
+
+# generated datasets
+datasets/
+
+# secrets
+.env
+kubeconfig*
